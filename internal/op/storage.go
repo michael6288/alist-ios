@@ -25,6 +25,20 @@ func GetAllStorages() []driver.Driver {
 	return storagesMap.Values()
 }
 
+func GetFirst115Driver() driver.Driver {
+	return GetFirstDriver("115 Cloud")
+}
+
+func GetFirstDriver(name string) driver.Driver {
+	storages := storagesMap.Values()
+	for _, storage := range storages {
+		if storage.Config().Name == name {
+			return storage
+		}
+	}
+	return nil
+}
+
 func HasStorage(mountPath string) bool {
 	return storagesMap.Has(utils.FixAndCleanPath(mountPath))
 }
@@ -116,6 +130,18 @@ func EnableStorage(ctx context.Context, id uint) error {
 	err = db.UpdateStorage(storage)
 	if err != nil {
 		return errors.WithMessage(err, "failed update storage in db")
+	}
+	err = LoadStorage(ctx, *storage)
+	if err != nil {
+		return errors.WithMessage(err, "failed load storage")
+	}
+	return nil
+}
+
+func ReloadStorage(ctx context.Context, id uint) error {
+	storage, err := db.GetStorageById(id)
+	if err != nil {
+		return errors.WithMessage(err, "failed get storage")
 	}
 	err = LoadStorage(ctx, *storage)
 	if err != nil {
